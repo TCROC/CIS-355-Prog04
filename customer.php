@@ -19,6 +19,7 @@ if(isset($_GET["id"]))                  $id = $_GET["id"];
 if(isset($_POST["name"]))               $cust->name = $_POST["name"];
 if(isset($_POST["email"]))              $cust->email = $_POST["email"];
 if(isset($_POST["mobile"]))             $cust->mobile = $_POST["mobile"];
+if(isset($_POST["description"]))        $cust->description = $_POST["description"];
 
 if (isset($_FILES['Filename']))         $cust->fileName       = $_FILES['Filename']['name'];
 if (isset($_FILES['Filename']))         $cust->tempFileName   = $_FILES['Filename']['tmp_name'];
