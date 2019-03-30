@@ -404,7 +404,8 @@ class Customer {
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Mobile</th>
-                                    <th>Picture</th>
+                                    <th>BLOB Picture</th>
+                                    <th>Path Picture</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -418,6 +419,7 @@ class Customer {
                 echo "<td>". $row["email"] . "</td>";
                 echo "<td>". $row["mobile"] . "</td>";
                 echo "<td>" . '<img width=50 height=50 src="data:image/jpeg;base64,' . base64_encode( $row['content'] ).'"/>' . "</td>";
+                echo "<td>" . '<img width=50 height=50 src="uploads/' . $row["id"] . "/" . $row['filename'] .'"/>' . "</td>";
                 echo "<td width=250>";
                 echo "<a class='btn btn-info' href='$this->urlName.php?fun=display_read_form&id=".$row["id"]."'>Read</a>";
                 echo "&nbsp;";
