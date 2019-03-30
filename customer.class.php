@@ -5,8 +5,6 @@ class Customer {
     public $name;
     public $email;
     public $mobile;
-    public $pictureContent;
-    public $pictureLocation;
     private $noerrors = true;
     private $nameError = null;
     private $emailError = null;
@@ -14,6 +12,7 @@ class Customer {
     private $title = "Customer";
     private $tableName = "customers";
     private $urlName =  "customer";
+    public $pictureContent;
 
     public $fileName;
     public $tempFileName;
@@ -76,13 +75,25 @@ class Customer {
      *   or Create form (if errors)
      */
     function insert_db_record () {
+
+// put the content of the file into a variable, $content
+        $fp      = fopen($this->tempFileName, 'r');
+        $content = fread($fp, filesize($this->tempFileName));
+        fclose($fp);
+
         if ($this->fieldsAllValid ()) { // validate user input
-            // if valid data, insert record into table
+            //echo "name " . $this->name . "Email " . $this->email, "Mobile " . $this->mobile, "File Name " . $this->fileName, "File Type " .  $this->fileType, " content " .  $content, "file size " .  $this->fileSize;
             $pdo = Database::connect();
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $sql = "INSERT INTO $this->tableName (name,email,mobile) values(?, ?, ?)";
+            $sql = "INSERT INTO $this->tableName (name,email,mobile,filename,filetype,content,filesize) values(?, ?, ?, ?, ?, ?, ?)";
             $q = $pdo->prepare($sql);
-            $q->execute(array($this->name,$this->email,$this->mobile));
+            $q->execute(array($this->name,$this->email,$this->mobile, $this->fileName, $this->fileType, $content, $this->fileSize));
+
+            $this->id = $pdo->lastInsertId();
+
+            // if valid data, insert record into table
+            $this->store_file_locally();
+
             Database::disconnect();
             header("Location: $this->urlName.php"); // go back to "list"
         }
@@ -104,18 +115,29 @@ class Customer {
         $this->name = $data['name'];
         $this->email = $data['email'];
         $this->mobile = $data['mobile'];
+        $this->pictureContent = $data['content'];
     } // function select_db_record()
     
     function update_db_record ($id) {
+
+// put the content of the file into a variable, $content
+        $fp      = fopen($this->tempFileName, 'r');
+        $content = fread($fp, filesize($this->tempFileName));
+        fclose($fp);
+
         $this->id = $id;
         if ($this->fieldsAllValid()) {
             $this->noerrors = true;
+
             $pdo = Database::connect();
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $sql = "UPDATE $this->tableName  set name = ?, email = ?, mobile = ? WHERE id = ?";
+            $sql = "UPDATE $this->tableName  set name = ?, email = ?, mobile = ?, filename = ?, filetype = ?, content = ?, filesize = ?  WHERE id = ?";
             $q = $pdo->prepare($sql);
-            $q->execute(array($this->name,$this->email,$this->mobile,$this->id));
+            $q->execute(array($this->name, $this->email, $this->mobile, $this->fileName, $this->fileType, $content, $this->fileSize, $this->id));
             Database::disconnect();
+
+            $this->store_file_locally();
+
             header("Location: $this->urlName.php");
         }
         else {
@@ -133,6 +155,19 @@ class Customer {
         Database::disconnect();
         header("Location: $this->urlName.php");
     } // end function delete_db_record()
+
+    function store_file_locally(){
+        // set server location (subdirectory) to store uploaded files
+        $fileLocation = "uploads/" . $this->id ."/";
+        $fileFullPath = $fileLocation . $this->fileName;
+
+        if (!file_exists($fileLocation))
+            mkdir ($fileLocation, 0, true); // create subdirectory, if necessary
+        else
+            array_map('unlink', glob($fileLocation . "*"));
+
+        move_uploaded_file($this->tempFileName, $fileFullPath);
+    }
     
     private function generate_html_top ($fun, $id=null) {
         switch ($fun) {
@@ -176,7 +211,7 @@ class Customer {
                         <p class='row'>
                             <h3>$funWord a $this->title</h3>
                         </p>
-                        <form class='form-horizontal' action='$this->urlName.php?fun=$funNext' method='post'>                        
+                        <form class='form-horizontal' action='$this->urlName.php?fun=$funNext' method='post' enctype='multipart/form-data' onsubmit='return Validate(this);'>                        
                     ";
     } // end function generate_html_top()
     
@@ -210,6 +245,38 @@ class Customer {
                 </div> <!-- /container -->
             </body>
         </html>
+        <script>
+        // Code taken from https://canvas.svsu.edu/courses/28460/files/folder/_file_upload
+            var _validFileExtensions = [\".jpg\", \".jpeg\", \".gif\", \".png\"];    
+            function Validate(oForm) {
+                var arrInputs = oForm.getElementsByTagName(\"input\");
+                for (var i = 0; i < arrInputs.length; i++) {
+                    var oInput = arrInputs[i];
+                    if (oInput.type == \"file\") {
+                        var sFileName = oInput.value;
+                        if (sFileName.length > 0) {
+                            var blnValid = false;
+                            for (var j = 0; j < _validFileExtensions.length; j++) {
+                                var sCurExtension = _validFileExtensions[j];
+                                if (sFileName.substr(sFileName.length - sCurExtension.length, sCurExtension.length).toLowerCase() == sCurExtension.toLowerCase()) {
+                                    blnValid = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!blnValid) {
+                                alert(\"Sorry, \" + sFileName + \" is invalid, allowed extensions are: \" + _validFileExtensions.join(\", \"));
+                                return false;
+                            }
+                                                        
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+        </script>
                     ";
     } // end function generate_html_bottom()
     
@@ -236,14 +303,14 @@ class Customer {
         echo "</div>"; // end div: class='form-group'
     } // end function generate_form_group()
 
-    private function generate_form_picture($image, string $type, string $action)
+    private function generate_form_picture($content, string $type, string $action)
     {
         switch ($type){
             case "content":
-                echo '<img id=imgDisplay overflow=hidden width=200 height=200 src="data:image/jpeg;base64,' . base64_encode( $image ).'"/>';
+                echo '<img id=imgDisplay overflow=hidden width=200 height=200 src="data:image/jpeg;base64,' . base64_encode( $content ).'"/>';
                 break;
             case "path":
-                echo '<img id=imgDisplay overflow=hidden width=200 height=20 src="data:image/jpeg;base64,' . base64_encode( $image ).'"/>';
+                //echo '<img id=imgDisplay overflow=hidden width=200 height=20 src="data:image/jpeg;base64,' . base64_encode( $content ).'"/>';
                 break;
         }
 
@@ -254,6 +321,11 @@ class Customer {
                 echo '<br><input type="file" required name="Filename" onchange="readURL(this);">
                         <script type="text/javascript">
                         function readURL(input) {
+                            if (input.files[0].size > 1000000) {
+                                input.value = null;
+                                alert("The picture cannot be larger than 1MB in size!");
+                            }
+                            
                             if (input.files && input.files[0]) {
                                 var reader = new FileReader();
                                 reader.onload = function (e) {
@@ -261,6 +333,8 @@ class Customer {
                                 }
                 
                                 reader.readAsDataURL(input.files[0]);
+                            } else {
+                                    $(\'#imgDisplay\').attr(\'src\', null);
                             }
                         }
                         </script>';
@@ -271,7 +345,7 @@ class Customer {
     private function fieldsAllValid () {
         $valid = true;
 
-        if (empty($this->pictureContent)){
+        if (empty($this->fileName)){
             $this->nameError = 'Please upload a picture';
             $valid = false;
         }
@@ -343,7 +417,7 @@ class Customer {
                 echo "<td>". $row["name"] . "</td>";
                 echo "<td>". $row["email"] . "</td>";
                 echo "<td>". $row["mobile"] . "</td>";
-                echo "<td>" . '<img width=100 src="data:image/jpeg;base64,' . base64_encode( $row['content'] ).'"/>' . "</td>";
+                echo "<td>" . '<img width=50 height=50 src="data:image/jpeg;base64,' . base64_encode( $row['content'] ).'"/>' . "</td>";
                 echo "<td width=250>";
                 echo "<a class='btn btn-info' href='$this->urlName.php?fun=display_read_form&id=".$row["id"]."'>Read</a>";
                 echo "&nbsp;";
