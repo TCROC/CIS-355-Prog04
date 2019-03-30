@@ -23,11 +23,11 @@ class Customer {
 
     function create_record() { // display "create" form
         $this->generate_html_top (1);
-        $this->generate_form_picture($this->pictureContent, "content", "create");
+        $this->generate_form_picture($this->pictureContent, "content", "create", "required");
+        $this->generate_form_group("input","description", $this->descriptionError, $this->description, "required");
         $this->generate_form_group("input","name", $this->nameError, $this->name, "autofocus");
         $this->generate_form_group("input","email", $this->emailError, $this->email);
         $this->generate_form_group("input","mobile", $this->mobileError, $this->mobile);
-        $this->generate_form_group("input","description", $this->descriptionError, $this->description);
         $this->generate_html_bottom (1);
     } // end function create_record()
     
@@ -35,10 +35,10 @@ class Customer {
         $this->select_db_record($id);
         $this->generate_html_top(2);
         $this->generate_form_picture($this->pictureContent, "content", "read");
+        $this->generate_form_group("input","description", $this->descriptionError, $this->description, "disabled");
         $this->generate_form_group("input","name", $this->nameError, $this->name, "disabled");
         $this->generate_form_group("input","email", $this->emailError, $this->email, "disabled");
         $this->generate_form_group("input","mobile", $this->mobileError, $this->mobile, "disabled");
-        $this->generate_form_group("input","description", $this->descriptionError, $this->description, "disabled");
         $this->generate_html_bottom(2);
     } // end function read_record()
     
@@ -46,10 +46,10 @@ class Customer {
         if($this->noerrors) $this->select_db_record($id);
         $this->generate_html_top(3, $id);
         $this->generate_form_picture($this->pictureContent, "content", "update");
+        $this->generate_form_group("input","description", $this->descriptionError, $this->description, "required");
         $this->generate_form_group("input","name", $this->nameError, $this->name, "autofocus onfocus='this.select()'");
         $this->generate_form_group("input","email", $this->emailError, $this->email);
         $this->generate_form_group("input","mobile", $this->mobileError, $this->mobile);
-        $this->generate_form_group("input","description", $this->descriptionError, $this->description);
         $this->generate_html_bottom(3);
     } // end function update_record()
     
@@ -57,10 +57,10 @@ class Customer {
         $this->select_db_record($id);
         $this->generate_html_top(4, $id);
         $this->generate_form_picture($this->pictureContent, "content", "delete");
+        $this->generate_form_group("input","description", $this->descriptionError, $this->description, "disabled");
         $this->generate_form_group("input","name", $this->nameError, $this->name, "disabled");
         $this->generate_form_group("input","email", $this->emailError, $this->email, "disabled");
         $this->generate_form_group("input","mobile", $this->mobileError, $this->mobile, "disabled");
-        $this->generate_form_group("input","description", $this->descriptionError, $this->description, "disabled");
         $this->generate_html_bottom(4);
     } // end function delete_record()
     
@@ -126,33 +126,52 @@ class Customer {
         $this->email = $data['email'];
         $this->mobile = $data['mobile'];
         $this->pictureContent = $data['content'];
+        $this->description = $data['description'];
     } // function select_db_record()
     
     function update_db_record ($id) {
 
+        if ($this->tempFileName != null) {
 // put the content of the file into a variable, $content
-        $fp      = fopen($this->tempFileName, 'r');
-        $content = fread($fp, filesize($this->tempFileName));
-        fclose($fp);
+            $fp = fopen($this->tempFileName, 'r');
+            $content = fread($fp, filesize($this->tempFileName));
+            fclose($fp);
 
-        $this->id = $id;
-        if ($this->fieldsAllValid()) {
-            $this->noerrors = true;
+            $this->id = $id;
+            if ($this->fieldsAllValid()) {
+                $this->noerrors = true;
 
-            $absolutePath = $this->store_file_locally();
+                $absolutePath = $this->store_file_locally();
 
-            $pdo = Database::connect();
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $sql = "UPDATE $this->tableName  set name = ?, email = ?, mobile = ?, filename = ?, filetype = ?, content = ?, filesize = ?, absolutePath = ?, description = ?  WHERE id = ?";
-            $q = $pdo->prepare($sql);
-            $q->execute(array($this->name, $this->email, $this->mobile, $this->fileName, $this->fileType, $content, $this->fileSize, $absolutePath, $this->description, $this->id));
-            Database::disconnect();
+                $pdo = Database::connect();
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $sql = "UPDATE $this->tableName  set name = ?, email = ?, mobile = ?, filename = ?, filetype = ?, content = ?, filesize = ?, absolutePath = ?, description = ?  WHERE id = ?";
+                $q = $pdo->prepare($sql);
+                $q->execute(array($this->name, $this->email, $this->mobile, $this->fileName, $this->fileType, $content, $this->fileSize, $absolutePath, $this->description, $this->id));
+                Database::disconnect();
 
-            header("Location: $this->urlName.php");
-        }
-        else {
-            $this->noerrors = false;
-            $this->update_record($id);  // go back to "update" form
+                header("Location: $this->urlName.php");
+            } else {
+                $this->noerrors = false;
+                $this->update_record($id);  // go back to "update" form
+            }
+        } else {
+            $this->id = $id;
+            if ($this->fieldsAllValid()) {
+                $this->noerrors = true;
+
+                $pdo = Database::connect();
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $sql = "UPDATE $this->tableName  set name = ?, email = ?, mobile = ?, description = ?  WHERE id = ?";
+                $q = $pdo->prepare($sql);
+                $q->execute(array($this->name, $this->email, $this->mobile, $this->description, $this->id));
+                Database::disconnect();
+
+                header("Location: $this->urlName.php");
+            } else {
+                $this->noerrors = false;
+                $this->update_record($id);  // go back to "update" form
+            }
         }
     } // end function update_db_record 
     
@@ -314,7 +333,7 @@ class Customer {
         echo "</div>"; // end div: class='form-group'
     } // end function generate_form_group()
 
-    private function generate_form_picture($content, string $type, string $action)
+    private function generate_form_picture($content, string $type, string $action, string $required="")
     {
         switch ($type){
             case "content":
@@ -329,7 +348,7 @@ class Customer {
             case "create":
             case "update":
                 // Original code here: https://stackoverflow.com/questions/16207575/how-to-preview-a-image-before-and-after-upload
-                echo '<br><input type="file" required name="Filename" onchange="readURL(this);">
+                echo '<br><input type="file" name="Filename"' . $required . ' onchange="readURL(this);">
                         <script type="text/javascript">
                         function readURL(input) {
                             if (input.files[0].size > 1000000) {
@@ -355,11 +374,6 @@ class Customer {
     
     private function fieldsAllValid () {
         $valid = true;
-
-        if (empty($this->fileName)){
-            $this->nameError = 'Please upload a picture';
-            $valid = false;
-        }
 
         if (empty($this->name)) {
             $this->nameError = 'Please enter Name';
