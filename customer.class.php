@@ -281,6 +281,7 @@ class Customer {
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Mobile</th>
+                                    <th>Picture</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -290,16 +291,17 @@ class Customer {
         $sql = "SELECT * FROM $this->tableName ORDER BY id DESC";
         foreach ($pdo->query($sql) as $row) {
             echo "<tr>";
-            echo "<td>". $row["name"] . "</td>";
-            echo "<td>". $row["email"] . "</td>";
-            echo "<td>". $row["mobile"] . "</td>";
-            echo "<td width=250>";
-            echo "<a class='btn btn-info' href='$this->urlName.php?fun=display_read_form&id=".$row["id"]."'>Read</a>";
-            echo "&nbsp;";
-            echo "<a class='btn btn-warning' href='$this->urlName.php?fun=display_update_form&id=".$row["id"]."'>Update</a>";
-            echo "&nbsp;";
-            echo "<a class='btn btn-danger' href='$this->urlName.php?fun=display_delete_form&id=".$row["id"]."'>Delete</a>";
-            echo "</td>";
+                echo "<td>". $row["name"] . "</td>";
+                echo "<td>". $row["email"] . "</td>";
+                echo "<td>". $row["mobile"] . "</td>";
+                echo "<td>" . '<img width=100 src="data:image/jpeg;base64,' . base64_encode( $row['content'] ).'"/>' . "</td>";
+                echo "<td width=250>";
+                echo "<a class='btn btn-info' href='$this->urlName.php?fun=display_read_form&id=".$row["id"]."'>Read</a>";
+                echo "&nbsp;";
+                echo "<a class='btn btn-warning' href='$this->urlName.php?fun=display_update_form&id=".$row["id"]."'>Update</a>";
+                echo "&nbsp;";
+                echo "<a class='btn btn-danger' href='$this->urlName.php?fun=display_delete_form&id=".$row["id"]."'>Delete</a>";
+                echo "</td>";
             echo "</tr>";
         }
         Database::disconnect();        
