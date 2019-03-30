@@ -15,12 +15,18 @@ $cust = new Customer();
  
 // set active record field values, if any 
 // (field values not set for display_list and display_create_form)
-if(isset($_GET["id"]))          $id = $_GET["id"]; 
-if(isset($_POST["name"]))       $cust->name = $_POST["name"];
-if(isset($_POST["email"]))      $cust->email = $_POST["email"];
-if(isset($_POST["mobile"]))     $cust->mobile = $_POST["mobile"];
+if(isset($_GET["id"]))                  $id = $_GET["id"];
+if(isset($_POST["pictureLocation"]))    $cust->pictureLocation = $_POST["pictureLocation"];
+if(isset($_POST["pictureContent"]))     $cust->pictureContent = $_POST["pictureContent"];
+if(isset($_POST["name"]))               $cust->name = $_POST["name"];
+if(isset($_POST["email"]))              $cust->email = $_POST["email"];
+if(isset($_POST["mobile"]))             $cust->mobile = $_POST["mobile"];
 
-// "fun" is short for "function" to be invoked 
+if (isset($_FILES['Filename']))         $cust->fileName       = $_FILES['Filename']['name'];
+if (isset($_FILES['Filename']))         $cust->tempFileName   = $_FILES['Filename']['tmp_name'];
+if (isset($_FILES['Filename']))         $cust->fileSize       = $_FILES['Filename']['size'];// "fun" is short for "function" to be invoked
+if (isset($_FILES['Filename']))         $cust->fileType       = $_FILES['Filename']['type'];
+
 if(isset($_GET["fun"])) $fun = $_GET["fun"];
 else $fun = "display_list"; 
 

@@ -5,6 +5,8 @@ class Customer {
     public $name;
     public $email;
     public $mobile;
+    public $pictureContent;
+    public $pictureLocation;
     private $noerrors = true;
     private $nameError = null;
     private $emailError = null;
@@ -13,8 +15,14 @@ class Customer {
     private $tableName = "customers";
     private $urlName =  "customer";
 
+    public $fileName;
+    public $tempFileName;
+    public $fileSize;
+    public $fileType;
+
     function create_record() { // display "create" form
         $this->generate_html_top (1);
+        $this->generate_form_picture($this->pictureContent, "content", "create");
         $this->generate_form_group("name", $this->nameError, $this->name, "autofocus");
         $this->generate_form_group("email", $this->emailError, $this->email);
         $this->generate_form_group("mobile", $this->mobileError, $this->mobile);
@@ -24,6 +32,7 @@ class Customer {
     function read_record($id) { // display "read" form
         $this->select_db_record($id);
         $this->generate_html_top(2);
+        $this->generate_form_picture($this->pictureContent, "content", "read");
         $this->generate_form_group("name", $this->nameError, $this->name, "disabled");
         $this->generate_form_group("email", $this->emailError, $this->email, "disabled");
         $this->generate_form_group("mobile", $this->mobileError, $this->mobile, "disabled");
@@ -33,6 +42,7 @@ class Customer {
     function update_record($id) { // display "update" form
         if($this->noerrors) $this->select_db_record($id);
         $this->generate_html_top(3, $id);
+        $this->generate_form_picture($this->pictureContent, "content", "update");
         $this->generate_form_group("name", $this->nameError, $this->name, "autofocus onfocus='this.select()'");
         $this->generate_form_group("email", $this->emailError, $this->email);
         $this->generate_form_group("mobile", $this->mobileError, $this->mobile);
@@ -42,6 +52,7 @@ class Customer {
     function delete_record($id) { // display "read" form
         $this->select_db_record($id);
         $this->generate_html_top(4, $id);
+        $this->generate_form_picture($this->pictureContent, "content", "delete");
         $this->generate_form_group("name", $this->nameError, $this->name, "disabled");
         $this->generate_form_group("email", $this->emailError, $this->email, "disabled");
         $this->generate_form_group("mobile", $this->mobileError, $this->mobile, "disabled");
@@ -224,9 +235,47 @@ class Customer {
         //echo "</div>"; // end div: class='controls'
         echo "</div>"; // end div: class='form-group'
     } // end function generate_form_group()
+
+    private function generate_form_picture($image, string $type, string $action)
+    {
+        switch ($type){
+            case "content":
+                echo '<img id=imgDisplay overflow=hidden width=200 height=200 src="data:image/jpeg;base64,' . base64_encode( $image ).'"/>';
+                break;
+            case "path":
+                echo '<img id=imgDisplay overflow=hidden width=200 height=20 src="data:image/jpeg;base64,' . base64_encode( $image ).'"/>';
+                break;
+        }
+
+        switch ($action) {
+            case "create":
+            case "update":
+                // Original code here: https://stackoverflow.com/questions/16207575/how-to-preview-a-image-before-and-after-upload
+                echo '<br><input type="file" required name="Filename" onchange="readURL(this);">
+                        <script type="text/javascript">
+                        function readURL(input) {
+                            if (input.files && input.files[0]) {
+                                var reader = new FileReader();
+                                reader.onload = function (e) {
+                                    $(\'#imgDisplay\').attr(\'src\', e.target.result);
+                                }
+                
+                                reader.readAsDataURL(input.files[0]);
+                            }
+                        }
+                        </script>';
+                break;
+        }
+    }
     
     private function fieldsAllValid () {
         $valid = true;
+
+        if (empty($this->pictureContent)){
+            $this->nameError = 'Please upload a picture';
+            $valid = false;
+        }
+
         if (empty($this->name)) {
             $this->nameError = 'Please enter Name';
             $valid = false;
