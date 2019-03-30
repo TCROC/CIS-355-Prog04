@@ -1,6 +1,6 @@
 <?php
 
-// see HTML form (Upload01.html) for overview of this program
+// see HTML form (Upload.html) for overview of this program
 
 require_once('functions01.php');
 
@@ -32,7 +32,7 @@ if (!file_exists($fileFullPath)) {
         echo "File <b><i>" . $fileName
             . "</i></b> has been successfully uploaded.";
         // code below assumes filepath is same as filename of this file
-        // minus the 12 characters of this file, "Upload01.php"
+        // minus the 12 characters of this file, "Upload.php"
         // plus the string, $fileLocation, i.e. "uploads/"
         echo "<br>To see all uploaded files, visit: "
             . "<a href='"
