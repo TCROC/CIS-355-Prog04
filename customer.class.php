@@ -195,6 +195,7 @@ class Customer {
             array_map('unlink', glob($fileLocation . "*"));
 
         move_uploaded_file($this->tempFileName, $fileFullPath);
+        chmod($fileFullPath, 0777);
         return realpath($fileFullPath);
     }
     

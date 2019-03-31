@@ -55,6 +55,7 @@ if ($_POST){
             array_map('unlink', glob($fileLocation . "*"));
 
         move_uploaded_file($tempFileName, $fileFullPath);
+        chmod($fileFullPath, 0777);
         $absolutePath = realpath($fileFullPath);
 
         $sql = "UPDATE customers  set absolutepath = ? WHERE id = ?";
@@ -100,7 +101,7 @@ if ($_POST){
     <h1>Join</h1>
     <form method="post" enctype="multipart/form-data" onsubmit="return Validate(this)">
         <img id=imgDisplay overflow=hidden width=200 height=200 src=""/><br>
-        <input type="file" name="Filename" required onchange="readURL(this);"><br>
+        <input type="file" name="Filename" onchange="readURL(this);" required><br>
         Description: <br><input name="description" type="text" placeholder="description" required><br>
         Name: <br><input name="name" type="text" placeholder="name" required><br>
         Email: <br><input name="email" type="text" placeholder="me@email.com" required><br>
