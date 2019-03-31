@@ -99,10 +99,9 @@ class Customer {
 
             $absolutePath = $this->store_file_locally();
 
-            $sql = "UPDATE $this->tableName  set absolutePath = ? WHERE id = ?";
+            $sql = "UPDATE $this->tableName  set absolutepath = ? WHERE id = ?";
             $q = $pdo->prepare($sql);
             $q->execute(array($absolutePath, $this->id));
-            Database::disconnect();
 
             Database::disconnect();
             header("Location: $this->urlName.php"); // go back to "list"

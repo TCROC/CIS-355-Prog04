@@ -15,24 +15,24 @@ if ($_POST){
     $email = $_POST['email'];
     $mobile = $_POST['mobile'];
     $password = MD5 ($_POST['password']);
+    $description = $_POST['description'];
 
     $fileName = $_FILES['Filename']['name'];
     $tempFileName = $_FILES['Filename']['tmp_name'];
     $fileSize = $_FILES['Filename']['size'];
     $fileType = $_FILES['Filename']['type'];
+    $pdo = Database::connect();
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // put the content of the file into a variable, $content
     $fp      = fopen($tempFileName, 'r');
     $content = fread($fp, filesize($tempFileName));
     fclose($fp);
 
-    $pdo = Database::connect();
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
     // Add the data to the database.
-    $sql = "INSERT INTO customers (name,email,mobile,filename,filetype,content,filesize,description) values(?, ?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO customers (name,email,mobile, password_hash, filename, filetype,content,filesize,description) values(?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $q = $pdo->prepare($sql);
-    $q->execute(array($name,$email,$mobile, $fileName, $fileType, $content, $fileSize, $description));
+    $q->execute(array($name,$email,$mobile, $password, $fileName, $fileType, $content, $fileSize, $description));
 
     // Now try to query that username / password combination to make sure the account was created successfully.
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -40,6 +40,25 @@ if ($_POST){
     $q = $pdo->prepare($sql);
     $q->execute(array($email,$password));
     $data = $q->fetch(PDO::FETCH_ASSOC);
+
+    $id = $pdo->lastInsertId();
+
+    $fileLocation = "uploads1/" . $id ."/";
+    $fileFullPath = $fileLocation . $fileName;
+    $absolutePath = realpath($fileFullPath);
+
+    if (!file_exists($fileLocation))
+        mkdir ($fileLocation, 0777, true); // create subdirectory, if necessary
+    else
+        array_map('unlink', glob($fileLocation . "*"));
+
+    move_uploaded_file($tempFileName, $fileFullPath);
+
+    $sql = "UPDATE customers  set absolutepath = ? WHERE id = ?";
+    $q = $pdo->prepare($sql);
+    $q->execute(array($absolutePath, $id));
+    Database::disconnect();
+
 
     // If we got data back, the account was created successfully. Go to customer.php.
     if ($data) {
@@ -77,7 +96,7 @@ if ($_POST){
 
 <div class="container">
     <h1>Join</h1>
-    <form method="post" onsubmit="return Validate(this)">
+    <form method="post" enctype="multipart/form-data" onsubmit="return Validate(this)">
         <img id=imgDisplay overflow=hidden width=200 height=200 src=""/><br>
         <input type="file" name="Filename" required onchange="readURL(this);"><br>
         Description: <br><input name="description" type="text" placeholder="description" required><br>
@@ -142,4 +161,4 @@ if ($_POST){
 
         return true;
     }
-</script>';
+</script>
