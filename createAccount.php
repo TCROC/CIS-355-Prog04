@@ -41,27 +41,27 @@ if ($_POST){
     $q->execute(array($email,$password));
     $data = $q->fetch(PDO::FETCH_ASSOC);
 
-    $id = $pdo->lastInsertId();
-
-    $fileLocation = "uploads1/" . $id ."/";
-    $fileFullPath = $fileLocation . $fileName;
-    $absolutePath = realpath($fileFullPath);
-
-    if (!file_exists($fileLocation))
-        mkdir ($fileLocation, 0777, true); // create subdirectory, if necessary
-    else
-        array_map('unlink', glob($fileLocation . "*"));
-
-    move_uploaded_file($tempFileName, $fileFullPath);
-
-    $sql = "UPDATE customers  set absolutepath = ? WHERE id = ?";
-    $q = $pdo->prepare($sql);
-    $q->execute(array($absolutePath, $id));
-    Database::disconnect();
-
 
     // If we got data back, the account was created successfully. Go to customer.php.
     if ($data) {
+        $id = $data["id"];
+
+        $fileLocation = "uploads1/" . $id ."/";
+        $fileFullPath = $fileLocation . $fileName;
+
+        if (!file_exists($fileLocation))
+            mkdir ($fileLocation, 0777, true); // create subdirectory, if necessary
+        else
+            array_map('unlink', glob($fileLocation . "*"));
+
+        move_uploaded_file($tempFileName, $fileFullPath);
+        $absolutePath = realpath($fileFullPath);
+
+        $sql = "UPDATE customers  set absolutepath = ? WHERE id = ?";
+        $q = $pdo->prepare($sql);
+        $q->execute(array($absolutePath, $id));
+        Database::disconnect();
+
         $_SESSION["username"] = $email;
 
         $to      = $email; // Send email to our user
@@ -77,8 +77,10 @@ if ($_POST){
         mail($to, $subject, $message, $headers); // Send our email
 
         header("Location: customer.php");
-    } else // Otherwise, try creating an account in again.
+    } else { // Otherwise, try creating an account in again.
+        Database::disconnect();
         header("Location: createAccount.php?errorMessage=Something went wrong. Please try again.");
+    }
 }
 ?>
 
