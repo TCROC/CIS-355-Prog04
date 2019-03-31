@@ -187,11 +187,11 @@ class Customer {
 
     function store_file_locally(){
         // set server location (subdirectory) to store uploaded files
-        $fileLocation = "uploads/" . $this->id ."/";
+        $fileLocation = "uploads1/" . $this->id ."/";
         $fileFullPath = $fileLocation . $this->fileName;
 
         if (!file_exists($fileLocation))
-            mkdir ($fileLocation, 0, true); // create subdirectory, if necessary
+            mkdir ($fileLocation, 0777, true); // create subdirectory, if necessary
         else
             array_map('unlink', glob($fileLocation . "*"));
 
@@ -333,7 +333,7 @@ class Customer {
         echo "</div>"; // end div: class='form-group'
     } // end function generate_form_group()
 
-    private function generate_form_picture($content, string $type, string $action, string $required="")
+    private function generate_form_picture($content, $type, $action, $required="")
     {
         switch ($type){
             case "content":
@@ -446,7 +446,7 @@ class Customer {
                 echo "<td>". $row["email"] . "</td>";
                 echo "<td>". $row["mobile"] . "</td>";
                 echo "<td>" . '<img width=50 height=50 src="data:image/jpeg;base64,' . base64_encode( $row['content'] ).'"/>' . "</td>";
-                echo "<td>" . '<img width=50 height=50 src="uploads/' . $row["id"] . "/" . $row['filename'] .'"/>' . "</td>";
+                echo "<td>" . '<img width=50 height=50 src="uploads1/' . $row["id"] . "/" . $row['filename'] .'"/>' . "</td>";
                 echo "<td><a href='" . $row["absolutepath"] . "' target='_blank'>". $row["absolutepath"] . "</a></td>";
                 echo "<td>". $row["description"] . "</td>";
                 echo "<td width=250>";
