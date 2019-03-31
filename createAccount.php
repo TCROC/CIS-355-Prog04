@@ -15,13 +15,24 @@ if ($_POST){
     $email = $_POST['email'];
     $mobile = $_POST['mobile'];
     $password = MD5 ($_POST['password']);
+
+    $fileName = $_FILES['Filename']['name'];
+    $tempFileName = $_FILES['Filename']['tmp_name'];
+    $fileSize = $_FILES['Filename']['size'];
+    $fileType = $_FILES['Filename']['type'];
+
+    // put the content of the file into a variable, $content
+    $fp      = fopen($tempFileName, 'r');
+    $content = fread($fp, filesize($tempFileName));
+    fclose($fp);
+
     $pdo = Database::connect();
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // Add the data to the database.
-    $sql = "INSERT INTO customers (name,email,mobile,password_hash) values(?, ?, ?, ?)";
-    $q = $pdo -> prepare($sql);
-    $q -> execute(array($name, $email, $mobile, $password));
+    $sql = "INSERT INTO customers (name,email,mobile,filename,filetype,content,filesize,description) values(?, ?, ?, ?, ?, ?, ?, ?)";
+    $q = $pdo->prepare($sql);
+    $q->execute(array($name,$email,$mobile, $fileName, $fileType, $content, $fileSize, $description));
 
     // Now try to query that username / password combination to make sure the account was created successfully.
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -66,7 +77,10 @@ if ($_POST){
 
 <div class="container">
     <h1>Join</h1>
-    <form method="post">
+    <form method="post" onsubmit="return Validate(this)">
+        <img id=imgDisplay overflow=hidden width=200 height=200 src=""/><br>
+        <input type="file" name="Filename" required onchange="readURL(this);"><br>
+        Description: <br><input name="description" type="text" placeholder="description" required><br>
         Name: <br><input name="name" type="text" placeholder="name" required><br>
         Email: <br><input name="email" type="text" placeholder="me@email.com" required><br>
         Mobile (123-456-7890): <br><input name="mobile" type="tel" placeholder="123-456-7890" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" required><br>
@@ -81,3 +95,51 @@ if ($_POST){
     </form>
 </div>
 </html>
+
+<script type="text/javascript">
+    function readURL(input) {
+        if (input.files[0].size > 1000000) {
+            input.value = null;
+            alert("The picture cannot be larger than 1MB in size!");
+        }
+
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById("imgDisplay").setAttribute("src", e.target.result);
+            }
+
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            document.getElementById("imgDisplay").setAttribute("src", null);
+        }
+    }
+
+    var _validFileExtensions = [".jpg", ".jpeg", ".gif", ".png"];
+    function Validate(oForm) {
+        var arrInputs = oForm.getElementsByTagName("input");
+        for (var i = 0; i < arrInputs.length; i++) {
+            var oInput = arrInputs[i];
+            if (oInput.type == "file") {
+                var sFileName = oInput.value;
+                if (sFileName.length > 0) {
+                    var blnValid = false;
+                    for (var j = 0; j < _validFileExtensions.length; j++) {
+                        var sCurExtension = _validFileExtensions[j];
+                        if (sFileName.substr(sFileName.length - sCurExtension.length, sCurExtension.length).toLowerCase() == sCurExtension.toLowerCase()) {
+                            blnValid = true;
+                            break;
+                        }
+                    }
+
+                    if (!blnValid) {
+                        alert("Sorry, " + sFileName + " is invalid, allowed extensions are: " + _validFileExtensions.join(", "));
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+</script>';

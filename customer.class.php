@@ -411,7 +411,7 @@ class Customer {
         echo "
             </head>
             <body>
-                <a href='https://github.com/TCROC/CIS-355-Prog03' target='_blank'>GitHub</a><br />
+                <a href='https://github.com/TCROC/CIS-355-Prog04' target='_blank'>GitHub</a><br />
                 <a href='Diagrams/CustomerFlow.pdf' target='_blank'>Flow Diagram</a><br />
                 <a href='Diagrams/CustomerUML.pdf' target='_blank'>UML Diagram</a><br />
                 <div class='container'>
